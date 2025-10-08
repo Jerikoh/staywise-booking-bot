@@ -3,15 +3,21 @@ import { QueryForm, QueryData } from "@/components/QueryForm";
 import { Building2, Calendar, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { AvailableUnits } from "@/components/results/AvailableUnits";
+import { ReservationCalculator } from "@/components/results/ReservationCalculator";
 
 const Index = () => {
   const navigate = useNavigate();
   const [queryData, setQueryData] = useState<QueryData | null>(null);
+  const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>([]);
 
   const handleQuery = (data: QueryData) => {
     setQueryData(data);
-    console.log("Query data:", data);
-    // TODO: Buscar unidades disponibles
+    setSelectedUnitIds([]);
+  };
+
+  const handleUnitsSelected = (unitIds: string[]) => {
+    setSelectedUnitIds(unitIds);
   };
 
   return (
@@ -64,6 +70,23 @@ const Index = () => {
         <div className="max-w-3xl mx-auto">
           <QueryForm onSubmit={handleQuery} />
         </div>
+
+        {/* Results */}
+        {queryData && (
+          <div className="max-w-5xl mx-auto mt-12 space-y-8">
+            <AvailableUnits queryData={queryData} onUnitsSelected={handleUnitsSelected} />
+            
+            {selectedUnitIds.length > 0 && (
+              <ReservationCalculator
+                startDate={queryData.startDate}
+                endDate={queryData.endDate}
+                adults={queryData.guests[0].adults}
+                children={queryData.guests[0].children}
+                selectedUnitIds={selectedUnitIds}
+              />
+            )}
+          </div>
+        )}
 
         {/* Features */}
         <div className="grid md:grid-cols-3 gap-6 mt-16 max-w-5xl mx-auto">

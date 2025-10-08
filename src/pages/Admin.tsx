@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Calendar, Package, Tag, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { UnitsManagement } from "@/components/admin/UnitsManagement";
+import { PeriodsManagement } from "@/components/admin/PeriodsManagement";
+import { ServicesManagement } from "@/components/admin/ServicesManagement";
+import { PromotionsManagement } from "@/components/admin/PromotionsManagement";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -50,43 +53,19 @@ const Admin = () => {
           </TabsList>
 
           <TabsContent value="units">
-            <Card className="p-8">
-              <h2 className="text-2xl font-bold text-foreground mb-4">Unidades de Hospedaje</h2>
-              <p className="text-muted-foreground">
-                Gestiona las unidades de hospedaje, sus capacidades y características.
-              </p>
-              {/* TODO: Implementar lista y formulario de unidades */}
-            </Card>
+            <UnitsManagement />
           </TabsContent>
 
           <TabsContent value="periods">
-            <Card className="p-8">
-              <h2 className="text-2xl font-bold text-foreground mb-4">Períodos Tarifarios</h2>
-              <p className="text-muted-foreground">
-                Define períodos tarifarios con prioridades y porcentajes de seña.
-              </p>
-              {/* TODO: Implementar lista y formulario de períodos */}
-            </Card>
+            <PeriodsManagement />
           </TabsContent>
 
           <TabsContent value="services">
-            <Card className="p-8">
-              <h2 className="text-2xl font-bold text-foreground mb-4">Servicios Adicionales</h2>
-              <p className="text-muted-foreground">
-                Configura servicios como desayuno, media pensión, etc.
-              </p>
-              {/* TODO: Implementar lista y formulario de servicios */}
-            </Card>
+            <ServicesManagement />
           </TabsContent>
 
           <TabsContent value="promotions">
-            <Card className="p-8">
-              <h2 className="text-2xl font-bold text-foreground mb-4">Promociones</h2>
-              <p className="text-muted-foreground">
-                Define descuentos por cantidad de noches.
-              </p>
-              {/* TODO: Implementar lista y formulario de promociones */}
-            </Card>
+            <PromotionsManagement />
           </TabsContent>
         </Tabs>
       </div>
