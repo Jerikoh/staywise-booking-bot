@@ -1,7 +1,10 @@
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Calendar, Package, Tag, ArrowLeft } from "lucide-react";
+import { Building2, Calendar, Package, Tag, ArrowLeft, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 import { UnitsManagement } from "@/components/admin/UnitsManagement";
 import { PeriodsManagement } from "@/components/admin/PeriodsManagement";
 import { ServicesManagement } from "@/components/admin/ServicesManagement";
@@ -9,6 +12,28 @@ import { PromotionsManagement } from "@/components/admin/PromotionsManagement";
 
 const Admin = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if user is authenticated
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate("/login");
+      }
+    });
+  }, [navigate]);
+
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Error al cerrar sesión",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      navigate("/login");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/30">
@@ -28,6 +53,15 @@ const Admin = () => {
             <div className="h-px w-8 bg-border/50" />
             <h1 className="text-xl font-bold text-foreground">Panel de Administración</h1>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSignOut}
+            className="gap-2"
+          >
+            <LogOut className="h-4 w-4" />
+            Cerrar Sesión
+          </Button>
         </div>
       </header>
 
