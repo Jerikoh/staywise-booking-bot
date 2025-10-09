@@ -18,7 +18,7 @@ export const PromotionsManagement = () => {
     min_nights: 3,
     discount_percentage: 10,
     description: "",
-    tariff_period_id: "",
+    tariff_period_id: "all",
   });
 
   const { data: promotions, isLoading } = useQuery({
@@ -49,7 +49,7 @@ export const PromotionsManagement = () => {
     mutationFn: async (data: typeof formData) => {
       const submitData = {
         ...data,
-        tariff_period_id: data.tariff_period_id || null,
+        tariff_period_id: data.tariff_period_id === "all" ? null : data.tariff_period_id || null,
       };
       const { error } = await supabase.from("promotions").insert([submitData]);
       if (error) throw error;
@@ -68,7 +68,7 @@ export const PromotionsManagement = () => {
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
       const submitData = {
         ...data,
-        tariff_period_id: data.tariff_period_id || null,
+        tariff_period_id: data.tariff_period_id === "all" ? null : data.tariff_period_id || null,
       };
       const { error } = await supabase
         .from("promotions")
@@ -114,7 +114,7 @@ export const PromotionsManagement = () => {
       min_nights: promotion.min_nights,
       discount_percentage: promotion.discount_percentage,
       description: promotion.description || "",
-      tariff_period_id: promotion.tariff_period_id || "",
+      tariff_period_id: promotion.tariff_period_id || "all",
     });
     setEditingId(promotion.id);
     setIsEditing(true);
@@ -125,7 +125,7 @@ export const PromotionsManagement = () => {
       min_nights: 3,
       discount_percentage: 10,
       description: "",
-      tariff_period_id: "",
+      tariff_period_id: "all",
     });
     setEditingId(null);
     setIsEditing(false);
@@ -187,7 +187,7 @@ export const PromotionsManagement = () => {
                 <SelectValue placeholder="Todas las temporadas" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas las temporadas</SelectItem>
+                <SelectItem value="all">Todas las temporadas</SelectItem>
                 {periods?.map((period) => (
                   <SelectItem key={period.id} value={period.id}>
                     {period.name}
