@@ -1,4 +1,5 @@
 import { formatCurrency } from "./priceCalculator";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AvailableUnit {
   id: string;
@@ -23,7 +24,35 @@ interface Promotion {
   description?: string;
 }
 
-export const generateAvailabilityMessage = (
+interface MessageTemplates {
+  [key: string]: string;
+}
+
+const replaceVariables = (template: string, variables: Record<string, any>): string => {
+  let result = template;
+  Object.keys(variables).forEach((key) => {
+    const value = variables[key] ?? "";
+    result = result.replace(new RegExp(`\\{${key}\\}`, "g"), String(value));
+  });
+  return result;
+};
+
+const getTemplates = async (): Promise<MessageTemplates> => {
+  const { data, error } = await supabase
+    .from("message_templates")
+    .select("template_type, content");
+  
+  if (error) throw error;
+  
+  const templates: MessageTemplates = {};
+  data?.forEach((t) => {
+    templates[t.template_type] = t.content;
+  });
+  
+  return templates;
+};
+
+export const generateAvailabilityMessage = async (
   startDate: string,
   endDate: string,
   nights: number,
@@ -32,13 +61,17 @@ export const generateAvailabilityMessage = (
   services: Service[],
   promotions: Promotion[],
   depositPercentage: number
-): string => {
+): Promise<string> => {
+  const templates = await getTemplates();
   let message = "";
 
   // Promotions section
   if (promotions.length > 0) {
     promotions.forEach((promo) => {
-      message += `✅*${promo.minNights} noches o más ${promo.discountPercentage}% de descuento*\n`;
+      message += replaceVariables(templates.availability_header, {
+        minNights: promo.minNights,
+        discountPercentage: promo.discountPercentage,
+      }) + "\n";
     });
     message += "\n";
   }
@@ -48,7 +81,8 @@ export const generateAvailabilityMessage = (
     guests.children > 0
       ? `${guests.adults + guests.children} personas (${guests.adults} adultos, ${guests.children} niños)`
       : `${guests.adults} personas`;
-  message += `_Para ${guestText}:_\n`;
+  
+  message += replaceVariables(templates.availability_guest_info, { guestText }) + "\n";
 
   // Available units
   units.forEach((unit) => {
@@ -56,13 +90,12 @@ export const generateAvailabilityMessage = (
       ? formatCurrency(unit.discountedPrice)
       : formatCurrency(unit.pricePerNight);
     
-    message += `🟠 ${unit.name} || ${price} / noche`;
-    
-    if (unit.hasDiscount) {
-      message += ` (${promotions[0]?.discountPercentage}% descuento aplicado)`;
-    }
-    
-    message += "\n";
+    const templateKey = unit.hasDiscount ? "availability_unit_discount" : "availability_unit";
+    message += replaceVariables(templates[templateKey], {
+      unitName: unit.name,
+      price,
+      discountPercentage: promotions[0]?.discountPercentage || 0,
+    }) + "\n";
   });
 
   message += "\n";
@@ -73,8 +106,13 @@ export const generateAvailabilityMessage = (
       ? `adultos ${formatCurrency(service.adultPrice)}, niños ${formatCurrency(service.childPrice)}`
       : formatCurrency(service.adultPrice);
 
-    message += `🥐 *${service.name}* (opcional) _${priceText}`;
-    message += service.perDay ? " por persona / día_\n" : " por persona_\n";
+    const perDayText = service.perDay ? " por persona / día" : " por persona";
+
+    message += replaceVariables(templates.availability_service, {
+      serviceName: service.name,
+      priceText,
+      perDayText,
+    }) + "\n";
 
     if (service.description) {
       message += `${service.description}\n`;
@@ -82,10 +120,10 @@ export const generateAvailabilityMessage = (
     message += "\n";
   });
 
-  // Important info
-  message += `📝 *Modo de reserva*\n`;
-  message += `* Depósito: ${depositPercentage}% para confirmar la reserva.\n`;
-  message += `* Medios de pago: aceptamos efectivo, transferencias. Tarjetas, QR y link de pago (*10% de recargo*)\n`;
+  // Footer
+  message += replaceVariables(templates.availability_footer, {
+    depositPercentage,
+  }) + "\n";
 
   return message;
 };
@@ -108,7 +146,7 @@ interface ReservationService {
   subtotal: number;
 }
 
-export const generateReservationMessage = (
+export const generateReservationMessage = async (
   startDate: string,
   endDate: string,
   nights: number,
@@ -117,7 +155,8 @@ export const generateReservationMessage = (
   services: ReservationService[],
   total: number,
   deposit: number
-): string => {
+): Promise<string> => {
+  const templates = await getTemplates();
   let message = "";
 
   // Date and guest info
@@ -126,41 +165,57 @@ export const generateReservationMessage = (
       ? `${nights} noches, ${guests.adults + guests.children} personas (${guests.adults} adultos, ${guests.children} niños)`
       : `${nights} noches, ${guests.adults} personas`;
 
-  message += `${startDate} - ${endDate} (${guestText})\n\n`;
+  message += replaceVariables(templates.reservation_header, {
+    startDate,
+    endDate,
+    guestText,
+  }) + "\n\n";
 
   // Units section
   if (units.length > 0) {
-    message += `_Unidades:_\n`;
+    message += templates.reservation_units_title + "\n";
     units.forEach((unit) => {
-      const priceText = formatCurrency(unit.pricePerNight);
-      message += `🟠 ${unit.name} || ${priceText} / noche`;
+      const templateKey = unit.hasDiscount && unit.discountPercentage 
+        ? "reservation_unit_discount" 
+        : "reservation_unit";
       
-      if (unit.hasDiscount && unit.discountPercentage) {
-        message += ` (${unit.discountPercentage}% descuento aplicado)`;
-      }
-      
-      message += ` [${formatCurrency(unit.subtotal)}]\n`;
+      message += replaceVariables(templates[templateKey], {
+        unitName: unit.name,
+        pricePerNight: formatCurrency(unit.pricePerNight),
+        subtotal: formatCurrency(unit.subtotal),
+        discountPercentage: unit.discountPercentage || 0,
+      }) + "\n";
     });
     message += "\n";
   }
 
   // Services section
   if (services.length > 0) {
-    message += `_Servicios:_\n`;
+    message += templates.reservation_services_title + "\n";
     services.forEach((service) => {
       const guestInfo =
         service.children > 0
           ? `${service.adults + service.children}p${service.days}d`
           : `${service.adults}p${service.days}d`;
 
-      message += `⚪ ${service.name} || ${formatCurrency(service.pricePerPerson)} / persona / día (${guestInfo}) [${formatCurrency(service.subtotal)}]\n`;
+      message += replaceVariables(templates.reservation_service, {
+        serviceName: service.name,
+        pricePerPerson: formatCurrency(service.pricePerPerson),
+        guestInfo,
+        subtotal: formatCurrency(service.subtotal),
+      }) + "\n";
     });
     message += "\n";
   }
 
   // Totals
-  message += `*Total:* _${formatCurrency(total)}_\n`;
-  message += `*Seña:* _${formatCurrency(deposit)}_\n`;
+  message += replaceVariables(templates.reservation_total, {
+    total: formatCurrency(total),
+  }) + "\n";
+  
+  message += replaceVariables(templates.reservation_deposit, {
+    deposit: formatCurrency(deposit),
+  }) + "\n";
 
   return message;
 };

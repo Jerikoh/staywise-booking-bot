@@ -77,7 +77,7 @@ export const ReservationCalculator = ({
     },
   });
 
-  const handleGenerateAvailability = () => {
+  const handleGenerateAvailability = async () => {
     if (!units || !services || !promotions || !periods) return;
 
     const formattedUnits = units.map((unit) => ({
@@ -103,7 +103,7 @@ export const ReservationCalculator = ({
 
     const depositPercentage = periods[0]?.deposit_percentage || 50;
 
-    const message = generateAvailabilityMessage(
+    const message = await generateAvailabilityMessage(
       format(new Date(startDate), "dd/MM", { locale: es }),
       format(new Date(endDate), "dd/MM", { locale: es }),
       nights,

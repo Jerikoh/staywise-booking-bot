@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Calendar, Package, Tag, ArrowLeft, LogOut } from "lucide-react";
+import { Building2, Calendar, Package, Tag, ArrowLeft, LogOut, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -9,6 +9,7 @@ import { UnitsManagement } from "@/components/admin/UnitsManagement";
 import { PeriodsManagement } from "@/components/admin/PeriodsManagement";
 import { ServicesManagement } from "@/components/admin/ServicesManagement";
 import { PromotionsManagement } from "@/components/admin/PromotionsManagement";
+import { TemplatesManagement } from "@/components/admin/TemplatesManagement";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -67,7 +68,7 @@ const Admin = () => {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="units" className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 bg-muted/50">
+          <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-5 bg-muted/50">
             <TabsTrigger value="units" className="gap-2">
               <Building2 className="h-4 w-4" />
               Unidades
@@ -83,6 +84,10 @@ const Admin = () => {
             <TabsTrigger value="promotions" className="gap-2">
               <Tag className="h-4 w-4" />
               Promociones
+            </TabsTrigger>
+            <TabsTrigger value="templates" className="gap-2">
+              <FileText className="h-4 w-4" />
+              Plantillas
             </TabsTrigger>
           </TabsList>
 
@@ -100,6 +105,10 @@ const Admin = () => {
 
           <TabsContent value="promotions">
             <PromotionsManagement />
+          </TabsContent>
+
+          <TabsContent value="templates">
+            <TemplatesManagement />
           </TabsContent>
         </Tabs>
       </div>

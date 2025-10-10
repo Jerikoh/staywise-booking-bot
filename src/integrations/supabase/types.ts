@@ -80,6 +80,33 @@ export type Database = {
         }
         Relationships: []
       }
+      message_templates: {
+        Row: {
+          content: string
+          created_at: string
+          description: string | null
+          id: string
+          template_type: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          template_type: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          template_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       promotions: {
         Row: {
           created_at: string | null
