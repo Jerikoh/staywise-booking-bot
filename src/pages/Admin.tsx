@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Calendar, Package, Tag, ArrowLeft, LogOut, FileText } from "lucide-react";
+import { Building2, Calendar, Package, Tag, ArrowLeft, LogOut, FileText, DollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -10,6 +10,7 @@ import { PeriodsManagement } from "@/components/admin/PeriodsManagement";
 import { ServicesManagement } from "@/components/admin/ServicesManagement";
 import { PromotionsManagement } from "@/components/admin/PromotionsManagement";
 import { TemplatesManagement } from "@/components/admin/TemplatesManagement";
+import { PricingManagement } from "@/components/admin/PricingManagement";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -67,15 +68,19 @@ const Admin = () => {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="units" className="space-y-6">
-          <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-5 bg-muted/50">
-            <TabsTrigger value="units" className="gap-2">
-              <Building2 className="h-4 w-4" />
-              Unidades
-            </TabsTrigger>
+        <Tabs defaultValue="periods" className="space-y-6">
+          <TabsList className="grid w-full max-w-4xl mx-auto grid-cols-6 bg-muted/50">
             <TabsTrigger value="periods" className="gap-2">
               <Calendar className="h-4 w-4" />
               Períodos
+            </TabsTrigger>
+            <TabsTrigger value="pricing" className="gap-2">
+              <DollarSign className="h-4 w-4" />
+              Precios
+            </TabsTrigger>
+            <TabsTrigger value="units" className="gap-2">
+              <Building2 className="h-4 w-4" />
+              Unidades
             </TabsTrigger>
             <TabsTrigger value="services" className="gap-2">
               <Package className="h-4 w-4" />
@@ -91,12 +96,16 @@ const Admin = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="units">
-            <UnitsManagement />
-          </TabsContent>
-
           <TabsContent value="periods">
             <PeriodsManagement />
+          </TabsContent>
+
+          <TabsContent value="pricing">
+            <PricingManagement />
+          </TabsContent>
+
+          <TabsContent value="units">
+            <UnitsManagement />
           </TabsContent>
 
           <TabsContent value="services">
