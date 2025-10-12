@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
@@ -20,6 +21,7 @@ export const PeriodsManagement = () => {
     end_date: "",
     degree: "second" as "first" | "second",
     deposit_percentage: 50,
+    is_blocked: false,
   });
 
   const { data: periods, isLoading } = useQuery({
@@ -100,6 +102,7 @@ export const PeriodsManagement = () => {
       end_date: period.end_date,
       degree: period.degree,
       deposit_percentage: period.deposit_percentage,
+      is_blocked: period.is_blocked || false,
     });
     setEditingId(period.id);
     setIsEditing(true);
@@ -112,6 +115,7 @@ export const PeriodsManagement = () => {
       end_date: "",
       degree: "second",
       deposit_percentage: 50,
+      is_blocked: false,
     });
     setEditingId(null);
     setIsEditing(false);
@@ -199,6 +203,19 @@ export const PeriodsManagement = () => {
             </div>
           </div>
 
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="is_blocked"
+              checked={formData.is_blocked}
+              onCheckedChange={(checked) =>
+                setFormData({ ...formData, is_blocked: checked as boolean })
+              }
+            />
+            <Label htmlFor="is_blocked" className="text-sm font-normal cursor-pointer">
+              Período bloqueado (sin reservas)
+            </Label>
+          </div>
+
           <Button type="submit" className="w-full">
             <Plus className="h-4 w-4 mr-2" />
             {isEditing ? "Actualizar" : "Crear"} Período
@@ -233,6 +250,11 @@ export const PeriodsManagement = () => {
                       {format(new Date(period.end_date), "dd/MM/yyyy")}
                     </span>
                     <span>Seña: {period.deposit_percentage}%</span>
+                    {period.is_blocked && (
+                      <span className="text-destructive font-medium">
+                        🚫 Bloqueado
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="flex gap-2">

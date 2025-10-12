@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Calendar, Package, Tag, ArrowLeft, LogOut, FileText, DollarSign } from "lucide-react";
+import { Building2, Calendar, Package, Tag, ArrowLeft, LogOut, FileText, DollarSign, Ban, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -11,6 +11,8 @@ import { ServicesManagement } from "@/components/admin/ServicesManagement";
 import { PromotionsManagement } from "@/components/admin/PromotionsManagement";
 import { TemplatesManagement } from "@/components/admin/TemplatesManagement";
 import { PricingManagement } from "@/components/admin/PricingManagement";
+import { PeriodExclusionsManagement } from "@/components/admin/PeriodExclusionsManagement";
+import { PromotionUnitsManagement } from "@/components/admin/PromotionUnitsManagement";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -69,30 +71,38 @@ const Admin = () => {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="periods" className="space-y-6">
-          <TabsList className="grid w-full max-w-4xl mx-auto grid-cols-6 bg-muted/50">
+          <TabsList className="grid w-full max-w-6xl mx-auto grid-cols-4 lg:grid-cols-8 bg-muted/50">
             <TabsTrigger value="periods" className="gap-2">
               <Calendar className="h-4 w-4" />
-              Períodos
+              <span className="hidden sm:inline">Períodos</span>
             </TabsTrigger>
             <TabsTrigger value="pricing" className="gap-2">
               <DollarSign className="h-4 w-4" />
-              Precios
+              <span className="hidden sm:inline">Precios</span>
             </TabsTrigger>
             <TabsTrigger value="units" className="gap-2">
               <Building2 className="h-4 w-4" />
-              Unidades
+              <span className="hidden sm:inline">Unidades</span>
             </TabsTrigger>
             <TabsTrigger value="services" className="gap-2">
               <Package className="h-4 w-4" />
-              Servicios
+              <span className="hidden sm:inline">Servicios</span>
             </TabsTrigger>
             <TabsTrigger value="promotions" className="gap-2">
               <Tag className="h-4 w-4" />
-              Promociones
+              <span className="hidden sm:inline">Promociones</span>
+            </TabsTrigger>
+            <TabsTrigger value="promo-units" className="gap-2">
+              <Target className="h-4 w-4" />
+              <span className="hidden sm:inline">Unid/Promo</span>
+            </TabsTrigger>
+            <TabsTrigger value="exclusions" className="gap-2">
+              <Ban className="h-4 w-4" />
+              <span className="hidden sm:inline">Exclusiones</span>
             </TabsTrigger>
             <TabsTrigger value="templates" className="gap-2">
               <FileText className="h-4 w-4" />
-              Plantillas
+              <span className="hidden sm:inline">Plantillas</span>
             </TabsTrigger>
           </TabsList>
 
@@ -114,6 +124,14 @@ const Admin = () => {
 
           <TabsContent value="promotions">
             <PromotionsManagement />
+          </TabsContent>
+
+          <TabsContent value="promo-units">
+            <PromotionUnitsManagement />
+          </TabsContent>
+
+          <TabsContent value="exclusions">
+            <PeriodExclusionsManagement />
           </TabsContent>
 
           <TabsContent value="templates">

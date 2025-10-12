@@ -107,6 +107,78 @@ export type Database = {
         }
         Relationships: []
       }
+      period_excluded_units: {
+        Row: {
+          created_at: string | null
+          id: string
+          tariff_period_id: string | null
+          unit_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          tariff_period_id?: string | null
+          unit_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          tariff_period_id?: string | null
+          unit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "period_excluded_units_tariff_period_id_fkey"
+            columns: ["tariff_period_id"]
+            isOneToOne: false
+            referencedRelation: "tariff_periods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "period_excluded_units_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "accommodation_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotion_units: {
+        Row: {
+          created_at: string | null
+          id: string
+          promotion_id: string | null
+          unit_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          promotion_id?: string | null
+          unit_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          promotion_id?: string | null
+          unit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotion_units_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_units_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "accommodation_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       promotions: {
         Row: {
           created_at: string | null
@@ -194,6 +266,7 @@ export type Database = {
           deposit_percentage: number
           end_date: string
           id: string
+          is_blocked: boolean
           name: string
           start_date: string
           updated_at: string | null
@@ -204,6 +277,7 @@ export type Database = {
           deposit_percentage?: number
           end_date: string
           id?: string
+          is_blocked?: boolean
           name: string
           start_date: string
           updated_at?: string | null
@@ -214,6 +288,7 @@ export type Database = {
           deposit_percentage?: number
           end_date?: string
           id?: string
+          is_blocked?: boolean
           name?: string
           start_date?: string
           updated_at?: string | null
@@ -224,6 +299,7 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          min_nights: number
           price_per_night: number
           tariff_period_id: string | null
           unit_id: string | null
@@ -231,6 +307,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id?: string
+          min_nights?: number
           price_per_night: number
           tariff_period_id?: string | null
           unit_id?: string | null
@@ -238,6 +315,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           id?: string
+          min_nights?: number
           price_per_night?: number
           tariff_period_id?: string | null
           unit_id?: string | null

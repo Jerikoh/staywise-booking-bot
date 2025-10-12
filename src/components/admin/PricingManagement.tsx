@@ -71,7 +71,17 @@ export const PricingManagement = () => {
   });
 
   const updateUnitPriceMutation = useMutation({
-    mutationFn: async ({ unitId, periodId, price }: { unitId: string; periodId: string; price: number }) => {
+    mutationFn: async ({ 
+      unitId, 
+      periodId, 
+      price, 
+      minNights 
+    }: { 
+      unitId: string; 
+      periodId: string; 
+      price: number;
+      minNights: number;
+    }) => {
       const existing = unitPrices?.find(
         (up) => up.unit_id === unitId && up.tariff_period_id === periodId
       );
@@ -79,13 +89,18 @@ export const PricingManagement = () => {
       if (existing) {
         const { error } = await supabase
           .from("unit_prices")
-          .update({ price_per_night: price })
+          .update({ price_per_night: price, min_nights: minNights })
           .eq("id", existing.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("unit_prices")
-          .insert([{ unit_id: unitId, tariff_period_id: periodId, price_per_night: price }]);
+          .insert([{ 
+            unit_id: unitId, 
+            tariff_period_id: periodId, 
+            price_per_night: price,
+            min_nights: minNights
+          }]);
         if (error) throw error;
       }
     },
@@ -151,9 +166,13 @@ export const PricingManagement = () => {
   });
 
   const getUnitPrice = (unitId: string, periodId: string) => {
-    return unitPrices?.find(
+    const unitPrice = unitPrices?.find(
       (up) => up.unit_id === unitId && up.tariff_period_id === periodId
-    )?.price_per_night || "";
+    );
+    return {
+      price: unitPrice?.price_per_night || "",
+      minNights: unitPrice?.min_nights || 1
+    };
   };
 
   const getServicePrice = (serviceId: string, periodId: string) => {
@@ -162,12 +181,25 @@ export const PricingManagement = () => {
     );
   };
 
-  const handleUnitPriceChange = (unitId: string, periodId: string, value: string) => {
-    const price = parseFloat(value);
-    if (!isNaN(price) && price >= 0) {
-      const cellKey = `unit-${unitId}-${periodId}`;
+  const handleUnitPriceChange = (
+    unitId: string, 
+    periodId: string, 
+    value: string,
+    field: 'price' | 'minNights'
+  ) => {
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue) && numValue >= 0) {
+      const cellKey = `unit-${unitId}-${periodId}-${field}`;
       setSavingCell(cellKey);
-      updateUnitPriceMutation.mutate({ unitId, periodId, price });
+      
+      const currentPrice = getUnitPrice(unitId, periodId);
+      
+      updateUnitPriceMutation.mutate({ 
+        unitId, 
+        periodId, 
+        price: field === 'price' ? numValue : (parseFloat(currentPrice.price as string) || 0),
+        minNights: field === 'minNights' ? numValue : currentPrice.minNights
+      });
     }
   };
 
@@ -251,24 +283,51 @@ export const PricingManagement = () => {
                       <TableRow key={unit.id}>
                         <TableCell className="font-medium">{unit.name}</TableCell>
                         {periods.map((period) => {
-                          const cellKey = `unit-${unit.id}-${period.id}`;
-                          const isSaving = savingCell === cellKey;
+                          const unitPrice = getUnitPrice(unit.id, period.id);
+                          const cellKeyPrice = `unit-${unit.id}-${period.id}-price`;
+                          const cellKeyMinNights = `unit-${unit.id}-${period.id}-minNights`;
+                          const isSavingPrice = savingCell === cellKeyPrice;
+                          const isSavingMinNights = savingCell === cellKeyMinNights;
+                          
                           return (
                             <TableCell key={period.id}>
-                              <div className="relative">
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  placeholder="0"
-                                  value={getUnitPrice(unit.id, period.id)}
-                                  onChange={(e) => handleUnitPriceChange(unit.id, period.id, e.target.value)}
-                                  disabled={isSaving}
-                                  className="w-full"
-                                />
-                                {isSaving && (
-                                  <Loader2 className="absolute right-2 top-2 h-4 w-4 animate-spin" />
-                                )}
+                              <div className="space-y-2">
+                                <div className="relative">
+                                  <label className="text-xs text-muted-foreground block mb-1">
+                                    Precio/noche
+                                  </label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    placeholder="0"
+                                    value={unitPrice.price}
+                                    onChange={(e) => handleUnitPriceChange(unit.id, period.id, e.target.value, 'price')}
+                                    disabled={isSavingPrice}
+                                    className="w-full"
+                                  />
+                                  {isSavingPrice && (
+                                    <Loader2 className="absolute right-2 top-7 h-4 w-4 animate-spin" />
+                                  )}
+                                </div>
+                                <div className="relative">
+                                  <label className="text-xs text-muted-foreground block mb-1">
+                                    Mín. noches
+                                  </label>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    step="1"
+                                    placeholder="1"
+                                    value={unitPrice.minNights}
+                                    onChange={(e) => handleUnitPriceChange(unit.id, period.id, e.target.value, 'minNights')}
+                                    disabled={isSavingMinNights}
+                                    className="w-full"
+                                  />
+                                  {isSavingMinNights && (
+                                    <Loader2 className="absolute right-2 top-7 h-4 w-4 animate-spin" />
+                                  )}
+                                </div>
                               </div>
                             </TableCell>
                           );
