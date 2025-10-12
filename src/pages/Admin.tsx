@@ -13,56 +13,47 @@ import { TemplatesManagement } from "@/components/admin/TemplatesManagement";
 import { PricingManagement } from "@/components/admin/PricingManagement";
 import { PeriodExclusionsManagement } from "@/components/admin/PeriodExclusionsManagement";
 import { PromotionUnitsManagement } from "@/components/admin/PromotionUnitsManagement";
-
 const Admin = () => {
   const navigate = useNavigate();
-
   useEffect(() => {
     // Check if user is authenticated
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({
+      data: {
+        session
+      }
+    }) => {
       if (!session) {
         navigate("/login");
       }
     });
   }, [navigate]);
-
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
+    const {
+      error
+    } = await supabase.auth.signOut();
     if (error) {
       toast({
         title: "Error al cerrar sesión",
         description: error.message,
-        variant: "destructive",
+        variant: "destructive"
       });
     } else {
       navigate("/login");
     }
   };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/30">
+  return <div className="min-h-screen bg-gradient-to-br from-background to-muted/30">
       {/* Header */}
       <header className="border-b border-border/50 bg-card/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/")}
-              className="gap-2"
-            >
+            <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="gap-2">
               <ArrowLeft className="h-4 w-4" />
               Volver
             </Button>
             <div className="h-px w-8 bg-border/50" />
             <h1 className="text-xl font-bold text-foreground">Panel de Administración</h1>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSignOut}
-            className="gap-2"
-          >
+          <Button variant="outline" size="sm" onClick={handleSignOut} className="gap-2">
             <LogOut className="h-4 w-4" />
             Cerrar Sesión
           </Button>
@@ -98,7 +89,7 @@ const Admin = () => {
             </TabsTrigger>
             <TabsTrigger value="exclusions" className="gap-2">
               <Ban className="h-4 w-4" />
-              <span className="hidden sm:inline">Exclusiones</span>
+              <span className="hidden sm:inline">Exclus/Temp</span>
             </TabsTrigger>
             <TabsTrigger value="templates" className="gap-2">
               <FileText className="h-4 w-4" />
@@ -139,8 +130,6 @@ const Admin = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Admin;
