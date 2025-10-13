@@ -29,8 +29,8 @@ export const ReservationCalculator = ({
   children,
   selectedUnitIds,
 }: ReservationCalculatorProps) => {
-  const [selectedServices, setSelectedServices] = useState<Record<string, { adults: number; children: number }>>({}); 
-  const [selectedReservationUnits, setSelectedReservationUnits] = useState<Set<string>>(new Set());
+  const [selectedServices, setSelectedServices] = useState<Record<string, { adults: number; children: number; days: number }>>({}); 
+  const [selectedReservationUnits, setSelectedReservationUnits] = useState<Record<string, number>>({});
   const [generatedMessage, setGeneratedMessage] = useState("");
   const [showReservation, setShowReservation] = useState(false);
   const [messageType, setMessageType] = useState<"availability" | "reservation">("availability");
@@ -134,8 +134,10 @@ export const ReservationCalculator = ({
     if (!units || !services || !promotions || !periods) return;
 
     const reservationUnits = units
-      .filter((unit) => selectedReservationUnits.has(unit.id))
+      .filter((unit) => unit.id in selectedReservationUnits)
       .map((unit) => {
+        const unitNights = selectedReservationUnits[unit.id];
+        
         const priceCalc = calculateStayPrice(
           startDate,
           endDate,
@@ -156,7 +158,7 @@ export const ReservationCalculator = ({
         );
 
         const promotion = calculatePromotion(
-          nights,
+          unitNights,
           promotions.map(p => ({
             min_nights: p.min_nights,
             discount_percentage: p.discount_percentage,
@@ -164,40 +166,41 @@ export const ReservationCalculator = ({
           }))
         );
 
-        const subtotal = priceCalc.total;
+        const pricePerNight = priceCalc.total / nights;
+        const subtotal = pricePerNight * unitNights;
         const discountedSubtotal = promotion ? subtotal * (1 - promotion.percentage / 100) : subtotal;
 
         return {
           name: unit.name,
-          nights,
-          pricePerNight: priceCalc.total / nights,
+          nights: unitNights,
+          pricePerNight,
           subtotal: discountedSubtotal,
           hasDiscount: !!promotion,
           discountPercentage: promotion?.percentage,
         };
       });
 
-    const reservationServices = Object.entries(selectedServices).map(([serviceId, quantities]) => {
-      const service = services.find(s => s.id === serviceId);
-      if (!service) return null;
+    const reservationServices = Object.entries(selectedServices)
+      .filter(([_, quantities]) => quantities.adults > 0 || quantities.children > 0)
+      .map(([serviceId, quantities]) => {
+        const service = services.find(s => s.id === serviceId);
+        if (!service) return null;
 
-      const servicePrice = service.service_prices?.[0];
-      const adultPrice = servicePrice?.adult_price || 0;
-      const childPrice = servicePrice?.child_price || adultPrice;
-      const perDay = servicePrice?.per_day || true;
-      const days = perDay ? nights : 1;
+        const servicePrice = service.service_prices?.[0];
+        const adultPrice = servicePrice?.adult_price || 0;
+        const childPrice = servicePrice?.child_price || adultPrice;
 
-      const subtotal = (quantities.adults * adultPrice + quantities.children * childPrice) * days;
+        const subtotal = (quantities.adults * adultPrice + quantities.children * childPrice) * quantities.days;
 
-      return {
-        name: service.name,
-        adults: quantities.adults,
-        children: quantities.children,
-        days,
-        pricePerPerson: adultPrice,
-        subtotal,
-      };
-    }).filter(Boolean);
+        return {
+          name: service.name,
+          adults: quantities.adults,
+          children: quantities.children,
+          days: quantities.days,
+          pricePerPerson: adultPrice,
+          subtotal,
+        };
+      }).filter(Boolean);
 
     const total = reservationUnits.reduce((sum, u) => sum + u.subtotal, 0) +
       reservationServices.reduce((sum, s) => sum + (s?.subtotal || 0), 0);
@@ -222,7 +225,11 @@ export const ReservationCalculator = ({
 
   const handleProceedToReservation = () => {
     setShowReservation(true);
-    setSelectedReservationUnits(new Set(selectedUnitIds));
+    const initialUnits: Record<string, number> = {};
+    selectedUnitIds.forEach(id => {
+      initialUnits[id] = nights;
+    });
+    setSelectedReservationUnits(initialUnits);
   };
 
   return (
@@ -264,25 +271,48 @@ export const ReservationCalculator = ({
             <div className="space-y-4">
               <div>
                 <Label className="text-base font-semibold mb-3 block">Unidades a reservar</Label>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {units?.map((unit) => (
-                    <div key={unit.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`unit-${unit.id}`}
-                        checked={selectedReservationUnits.has(unit.id)}
-                        onCheckedChange={(checked) => {
-                          const newSet = new Set(selectedReservationUnits);
-                          if (checked) {
-                            newSet.add(unit.id);
-                          } else {
-                            newSet.delete(unit.id);
-                          }
-                          setSelectedReservationUnits(newSet);
-                        }}
-                      />
-                      <Label htmlFor={`unit-${unit.id}`} className="cursor-pointer">
-                        {unit.name}
-                      </Label>
+                    <div key={unit.id} className="border rounded-lg p-3 space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`unit-${unit.id}`}
+                          checked={unit.id in selectedReservationUnits}
+                          onCheckedChange={(checked) => {
+                            const newUnits = { ...selectedReservationUnits };
+                            if (checked) {
+                              newUnits[unit.id] = nights;
+                            } else {
+                              delete newUnits[unit.id];
+                            }
+                            setSelectedReservationUnits(newUnits);
+                          }}
+                        />
+                        <Label htmlFor={`unit-${unit.id}`} className="cursor-pointer font-medium">
+                          {unit.name}
+                        </Label>
+                      </div>
+                      {unit.id in selectedReservationUnits && (
+                        <div>
+                          <Label htmlFor={`unit-${unit.id}-nights`} className="text-sm">
+                            Cantidad de noches
+                          </Label>
+                          <Input
+                            id={`unit-${unit.id}-nights`}
+                            type="number"
+                            min="1"
+                            max={nights}
+                            value={selectedReservationUnits[unit.id]}
+                            onChange={(e) => {
+                              const value = Math.min(Math.max(1, parseInt(e.target.value) || 1), nights);
+                              setSelectedReservationUnits((prev) => ({
+                                ...prev,
+                                [unit.id]: value,
+                              }));
+                            }}
+                          />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -297,7 +327,7 @@ export const ReservationCalculator = ({
                       {service.description && (
                         <p className="text-sm text-muted-foreground">{service.description}</p>
                       )}
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         <div>
                           <Label htmlFor={`service-${service.id}-adults`} className="text-sm">
                             Adultos
@@ -314,6 +344,7 @@ export const ReservationCalculator = ({
                                 [service.id]: {
                                   adults: value,
                                   children: prev[service.id]?.children || 0,
+                                  days: prev[service.id]?.days || nights,
                                 },
                               }));
                             }}
@@ -336,12 +367,36 @@ export const ReservationCalculator = ({
                                   [service.id]: {
                                     adults: prev[service.id]?.adults || 0,
                                     children: value,
+                                    days: prev[service.id]?.days || nights,
                                   },
                                 }));
                               }}
                             />
                           </div>
                         )}
+                        <div>
+                          <Label htmlFor={`service-${service.id}-days`} className="text-sm">
+                            Días
+                          </Label>
+                          <Input
+                            id={`service-${service.id}-days`}
+                            type="number"
+                            min="1"
+                            max={nights}
+                            value={selectedServices[service.id]?.days || nights}
+                            onChange={(e) => {
+                              const value = Math.min(Math.max(1, parseInt(e.target.value) || 1), nights);
+                              setSelectedServices((prev) => ({
+                                ...prev,
+                                [service.id]: {
+                                  adults: prev[service.id]?.adults || 0,
+                                  children: prev[service.id]?.children || 0,
+                                  days: value,
+                                },
+                              }));
+                            }}
+                          />
+                        </div>
                       </div>
                     </div>
                   ))}
